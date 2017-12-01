@@ -1,0 +1,72 @@
+# Copyright 2018 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+workspace(name = "gke_mds_proxy")
+
+http_archive(
+    name = "envoy",
+    strip_prefix = "envoy-7c1e5ce626fae29a0354a08a248455b0c66d3ec2",
+    urls = ["https://github.com/envoyproxy/envoy/archive/7c1e5ce626fae29a0354a08a248455b0c66d3ec2.zip"],
+)
+
+http_archive(
+    name = "com_googlesource_code_re2",
+    strip_prefix = "re2-master",
+    urls = ["https://github.com/google/re2/archive/master.zip"],
+)
+
+load("@envoy//bazel:repositories.bzl", "envoy_dependencies")
+load("@envoy//bazel:cc_configure.bzl", "cc_configure")
+
+envoy_dependencies()
+
+cc_configure()
+
+load("@envoy_api//bazel:repositories.bzl", "api_dependencies")
+
+api_dependencies()
+
+load("@io_bazel_rules_go//go:def.bzl", "go_rules_dependencies", "go_register_toolchains")
+load("@com_lyft_protoc_gen_validate//bazel:go_proto_library.bzl", "go_proto_repositories")
+
+go_proto_repositories(shared = 0)
+
+go_rules_dependencies()
+
+go_register_toolchains()
+
+load("@io_bazel_rules_go//proto:def.bzl", "proto_register_toolchains")
+
+proto_register_toolchains()
+
+git_repository(
+    name = "io_bazel_rules_docker",
+    remote = "https://github.com/bazelbuild/rules_docker.git",
+    tag = "v0.3.0",
+)
+
+load(
+    "@io_bazel_rules_docker//container:container.bzl",
+    container_repositories = "repositories",
+    "container_pull",
+)
+
+container_pull(
+    name = "official_ubuntu",
+    registry = "index.docker.io",
+    repository = "library/ubuntu",
+    tag = "14.04",
+)
+
+container_repositories()
